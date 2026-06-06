@@ -727,6 +727,10 @@
     line-height: 1.15;
     word-break: break-word;
   }
+  .fi-aluno.nome-longo {
+    font-size: 13px;
+    letter-spacing: 0;
+  }
 
   .fi-cal {
     padding: 12px 16px 8px;
@@ -2454,7 +2458,7 @@ function montarHtmlFaturaImagem(aluno, ano, mes, f) {
       <div class="fi-header-divider"></div>
       <div class="fi-header-info">
         <div class="fi-mes">${ref}</div>
-        <div class="fi-aluno">${escapeHtmlPdf(aluno.nome)}</div>
+        <div class="fi-aluno${aluno.nome.length > 14 ? ' nome-longo' : ''}">${escapeHtmlPdf(aluno.nome)}</div>
       </div>
     </div>
 
@@ -2515,7 +2519,7 @@ async function gerarFaturaImagem() {
     await new Promise(r => setTimeout(r, 300));
 
     const el = stage.firstElementChild;
-    const canvas = await html2canvas(el, {
+    const h2cOpts = {
       scale: 2.5,
       useCORS: true,
       backgroundColor: '#F4F7F9',
@@ -2524,7 +2528,17 @@ async function gerarFaturaImagem() {
       windowWidth: 390,
       logging: false,
       imageTimeout: 0
-    });
+    };
+    let canvas;
+    try {
+      canvas = await html2canvas(el, h2cOpts);
+      /* Verifica se o canvas tem conteúdo (iOS às vezes retorna canvas em branco) */
+      if (!canvas || canvas.width === 0) throw new Error('canvas vazio');
+    } catch(e1) {
+      /* Retry após delay maior */
+      await new Promise(r => setTimeout(r, 800));
+      canvas = await html2canvas(el, h2cOpts);
+    }
 
     /* Download PNG — com fallback para iOS Safari */
     const dataUrl = canvas.toDataURL('image/png');
