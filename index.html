@@ -1942,15 +1942,19 @@ function marcarDupla(opcao) {
     t.pessoas[p2.id] = { status: 'ok' };
     t.creditoDupla = 0;
   } else if (opcao === 'so1') {
+    /* Só p1 veio: p2 faltou → cobra v2 (valor solo de p2)
+       Crédito só se fatura já foi paga (aluno já pagou o mês) */
     t.status = 'ok';
     t.pessoas[p1.id] = { status: 'ok' };
     t.pessoas[p2.id] = { status: 'noshow' };
-    t.creditoDupla = 0; /* sem crédito — você ainda não cobrou */
+    t.creditoDupla = state.pagamentos[mesKey(aluno.id, ano, mes)] ? cred1 : 0;
   } else if (opcao === 'so2') {
+    /* Só p2 veio: p1 faltou → cobra v1 (valor solo de p1)
+       Crédito só se fatura já foi paga (aluno já pagou o mês) */
     t.status = 'ok';
     t.pessoas[p1.id] = { status: 'noshow' };
     t.pessoas[p2.id] = { status: 'ok' };
-    t.creditoDupla = 0; /* sem crédito — você ainda não cobrou */
+    t.creditoDupla = state.pagamentos[mesKey(aluno.id, ano, mes)] ? cred2 : 0;
   } else if (opcao === 'ambos_noshow') {
     /* Os dois faltaram na hora → cobra vJuntos */
     t.status = 'noshow';
