@@ -686,28 +686,46 @@
   }
 
   .fi-header {
-    padding: 20px 28px 16px;
-    text-align: center;
+    padding: 18px 20px;
     background: #FFFFFF;
     border-bottom: 1px solid #E2E8ED;
     flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 0;
   }
-  .fi-logo { width: 180px; height: auto; display: block; margin: 0 auto 10px; }
+  .fi-logo { width: 150px; height: auto; display: block; flex-shrink: 0; }
+  .fi-header-divider {
+    width: 1px;
+    height: 56px;
+    background: #E2E8ED;
+    flex-shrink: 0;
+    margin: 0 18px;
+  }
+  .fi-header-info {
+    flex: 1;
+    text-align: left;
+    min-width: 0;
+  }
   .fi-mes {
     font-family: 'Outfit', sans-serif;
-    font-size: 15px;
-    font-weight: 800;
+    font-size: 12px;
+    font-weight: 700;
     letter-spacing: 0.12em;
     text-transform: uppercase;
     color: #1A7A8A;
+    line-height: 1.2;
   }
   .fi-aluno {
-    font-size: 12px;
-    color: #5A7080;
-    margin-top: 3px;
-    letter-spacing: 0.02em;
-    font-weight: 600;
+    font-size: 18px;
+    color: #0F1F2E;
+    margin-top: 5px;
+    font-weight: 800;
+    font-family: 'Outfit', sans-serif;
     text-transform: uppercase;
+    letter-spacing: -0.01em;
+    line-height: 1.15;
+    word-break: break-word;
   }
 
   .fi-cal {
@@ -2433,8 +2451,11 @@ function montarHtmlFaturaImagem(aluno, ano, mes, f) {
   <div class="fatura-img-wrap">
     <div class="fi-header">
       <img class="fi-logo" src="data:image/png;base64,LOGO_IMG_PLACEHOLDER">
-      <div class="fi-mes">${ref}</div>
-      <div class="fi-aluno">${escapeHtmlPdf(aluno.nome)}</div>
+      <div class="fi-header-divider"></div>
+      <div class="fi-header-info">
+        <div class="fi-mes">${ref}</div>
+        <div class="fi-aluno">${escapeHtmlPdf(aluno.nome)}</div>
+      </div>
     </div>
 
     <div class="fi-cal">
@@ -2481,9 +2502,17 @@ async function gerarFaturaImagem() {
     const logoB64 = document.querySelector('.topbar-logo').src.split(',')[1];
     html = html.replace('LOGO_IMG_PLACEHOLDER', logoB64);
     stage.innerHTML = html;
-    /* Aguarda fontes e render — iOS precisa de mais tempo */
-    await document.fonts.ready;
-    await new Promise(r => setTimeout(r, 700));
+    /* Aguarda fontes — se já pré-carregadas, instantâneo; senão aguarda */
+    if (!window._fontesCarregadas) {
+      await document.fonts.ready;
+      await Promise.all([
+        document.fonts.load('700 16px "Outfit"'),
+        document.fonts.load('700 16px "JetBrains Mono"'),
+        document.fonts.load('600 16px "Sora"'),
+      ]);
+      window._fontesCarregadas = true;
+    }
+    await new Promise(r => setTimeout(r, 300));
 
     const el = stage.firstElementChild;
     const canvas = await html2canvas(el, {
@@ -3430,6 +3459,19 @@ function renderAgendaHoje() {
    ================================================================ */
 carregar();
 renderDashboard();
+
+/* Pré-carrega as fontes assim que o app abre — evita erro na primeira geração de fatura */
+(async () => {
+  try {
+    await document.fonts.ready;
+    await Promise.all([
+      document.fonts.load('700 16px "Outfit"'),
+      document.fonts.load('700 16px "JetBrains Mono"'),
+      document.fonts.load('600 16px "Sora"'),
+    ]);
+  } catch(e) {}
+  window._fontesCarregadas = true;
+})();
 
 </script>
 
