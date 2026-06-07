@@ -2593,7 +2593,7 @@ async function gerarFaturaImagem() {
     html = html.replace('LOGO_IMG_PLACEHOLDER', (config.logoBase64 || LOGO_DEFAULT).split(',')[1] || (config.logoBase64 || LOGO_DEFAULT));
     stage.innerHTML = html;
     /* Aguarda fontes e aquecimento do canvas */
-    if (!window._fontesCarregadas || !window._canvasAquecido) {
+    if (!window._fontesCarregadas) {
       await document.fonts.ready;
       await Promise.all([
         document.fonts.load('700 16px "Outfit"'),
@@ -2601,9 +2601,21 @@ async function gerarFaturaImagem() {
         document.fonts.load('600 16px "Sora"'),
       ]);
       window._fontesCarregadas = true;
-      await new Promise(r => setTimeout(r, 500));
-    } else {
+    }
+    if (!window._canvasAquecido) {
+      /* Warmup inline — necessário no iOS PWA na primeira chamada */
+      try {
+        const _wd = document.createElement('div');
+        _wd.style.cssText = 'position:fixed;left:-9999px;top:-9999px;width:10px;height:10px;font-family:Outfit,sans-serif;';
+        _wd.textContent = 'x';
+        document.body.appendChild(_wd);
+        await html2canvas(_wd, { scale: 1, logging: false, imageTimeout: 0 });
+        document.body.removeChild(_wd);
+        window._canvasAquecido = true;
+      } catch(e) { /* continua mesmo se warmup falhar */ }
       await new Promise(r => setTimeout(r, 300));
+    } else {
+      await new Promise(r => setTimeout(r, 100));
     }
 
     const el = stage.firstElementChild;
