@@ -2268,32 +2268,76 @@ function salvarNota() {
 function apagarNota() { document.getElementById('nota-text').value = ''; salvarNota(); }
 
 /* Extra */
+/* Extra */
 function abrirExtra() {
   fecharModal('modal-dia');
-  document.getElementById('extra-sub').textContent = `Dia ${diaAtual.dia} · cobrança avulsa`;
-  document.getElementById('extra-desc').value = '';
-  document.getElementById('extra-valor').value = '';
+  const aluno = detalheAluno;
+  const isDupla = aluno.dupla && aluno.dupla.length === 2;
+  if (isDupla) {
+    const p1 = aluno.dupla[0];
+    const p2 = aluno.dupla[1];
+    const vJuntos = aluno.valorJuntos || ((p1.valorSozinho||p1.valor) + (p2.valorSozinho||p2.valor));
+    const v1 = p1.valorSozinho || p1.valor;
+    const v2 = p2.valorSozinho || p2.valor;
+    const fv1 = v1.toFixed(2).replace('.',',');
+    const fv2 = v2.toFixed(2).replace('.',',');
+    const fvJ = vJuntos.toFixed(2).replace('.',',');
+    document.getElementById('quem-sub').textContent = 'Dia ' + diaAtual.dia + ' · quem faz a aula extra?';
+    document.getElementById('quem-picker').innerHTML =
+      '<button class="opt" onclick="abrirExtraComQuem(\'juntos\',' + vJuntos + ',\'os dois\')">' +
+        '<div class="opt-icon">👥</div>' +
+        '<div class="opt-content"><div class="opt-title">Os dois juntos</div><div class="opt-desc">R$ ' + fvJ + ' na fatura de ambos</div></div>' +
+      '</button>' +
+      '<button class="opt" onclick="abrirExtraComQuem(\'' + p1.id + '\',' + v1 + ',\'' + p1.nome + '\')">' +
+        '<div class="opt-icon">👤</div>' +
+        '<div class="opt-content"><div class="opt-title">Só ' + p1.nome + '</div><div class="opt-desc">R$ ' + fv1 + ' — valor solo</div></div>' +
+      '</button>' +
+      '<button class="opt" onclick="abrirExtraComQuem(\'' + p2.id + '\',' + v2 + ',\'' + p2.nome + '\')">' +
+        '<div class="opt-icon">👤</div>' +
+        '<div class="opt-content"><div class="opt-title">Só ' + p2.nome + '</div><div class="opt-desc">R$ ' + fv2 + ' — valor solo</div></div>' +
+      '</button>' +
+      '<button class="btn btn-ghost" style="margin-top:8px" onclick="fecharModal(\'modal-quem\')">Cancelar</button>';
+    document.getElementById('modal-quem').classList.add('show');
+  } else {
+    document.getElementById('extra-sub').textContent = 'Dia ' + diaAtual.dia + ' · cobrança avulsa';
+    document.getElementById('extra-desc').value = '';
+    document.getElementById('extra-valor').value = '';
+    document.getElementById('btn-apagar-extra').style.display = 'none';
+    document.getElementById('modal-extra').classList.add('show');
+  }
+}
+
+let _extraDupla = null;
+function abrirExtraComQuem(quemId, valor, quemNome) {
+  fecharModal('modal-quem');
+  _extraDupla = { quemId: quemId, quemNome: quemNome, valor: valor };
+  const desc = quemId === 'juntos' ? 'Aula extra — os dois' : 'Aula extra — ' + quemNome;
+  document.getElementById('extra-sub').textContent = 'Dia ' + diaAtual.dia + ' · ' + quemNome;
+  document.getElementById('extra-desc').value = desc;
+  document.getElementById('extra-valor').value = valor.toFixed(2);
   document.getElementById('btn-apagar-extra').style.display = 'none';
   document.getElementById('modal-extra').classList.add('show');
 }
+
 function salvarExtra() {
   const desc = document.getElementById('extra-desc').value.trim();
   const valor = parseFloat(document.getElementById('extra-valor').value) || 0;
   if (!desc || valor <= 0) { toast('Preencha descrição e valor'); return; }
   const { ano, mes } = calVisao;
   const aluno = detalheAluno;
-
-  /* Extra sempre vai pro mês SEGUINTE */
   const proxMes = mes === 11 ? 0 : mes + 1;
   const proxAno = mes === 11 ? ano + 1 : ano;
   const keyProx = mesKey(aluno.id, proxAno, proxMes);
   if (!state.extras[keyProx]) state.extras[keyProx] = [];
-  state.extras[keyProx].push({
-    id: uid(), desc, valor,
-    dia: diaAtual.dia,
-    refMes: mes, refAno: ano,  /* mês de origem pra exibir na fatura */
-    extra: true
-  });
+  const isDupla = aluno.dupla && aluno.dupla.length === 2;
+  const entry = { id: uid(), desc: desc, valor: valor, dia: diaAtual.dia, refMes: mes, refAno: ano, extra: true };
+  if (isDupla && _extraDupla) {
+    entry.dupla = true;
+    entry.quemId = _extraDupla.quemId;
+    entry.quemNome = _extraDupla.quemNome;
+  }
+  _extraDupla = null;
+  state.extras[keyProx].push(entry);
 
   /* Marca o dia no calendário atual como "tem extra" */
   const key = mesKey(aluno.id, ano, mes);
@@ -2303,7 +2347,6 @@ function salvarExtra() {
   } else {
     state.treinos[key][String(diaAtual.dia).padStart(2,'0')].temExtra = true;
   }
-
   salvar();
   fecharModal('modal-extra');
   renderCalendario();
