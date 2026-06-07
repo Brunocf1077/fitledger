@@ -3599,27 +3599,6 @@ function salvarConfiguracoes() {
   toast('✅ Configurações salvas!');
 }
 
-function carregarLogo(input) {
-  const file = input.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    config.logoBase64 = e.target.result;
-    salvarConfig();
-    document.getElementById('cfg-logo-preview').src = config.logoBase64;
-    document.getElementById('cfg-logo-preview-wrap').style.display = 'block';
-    toast('✅ Logo salvo!');
-  };
-  reader.readAsDataURL(file);
-}
-
-function removerLogo() {
-  config.logoBase64 = '';
-  salvarConfig();
-  document.getElementById('cfg-logo-preview-wrap').style.display = 'none';
-  toast('Logo removido');
-}
-
 /* ================================================================
    INIT
    ================================================================ */
