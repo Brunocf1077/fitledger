@@ -454,7 +454,6 @@
   }
   .modal-backdrop.show { display: flex; }
   .modal-backdrop.center { align-items: center; padding: 20px; }
-  body.modal-open { overflow: hidden; }
   .modal {
     background: var(--surface);
     border-radius: 26px 26px 0 0;
@@ -1832,7 +1831,7 @@ function abrirDetalhe(alunoId) {
 
   renderCalendario();
   renderFaturaResumo();
-  document.getElementById('modal-detalhe').classList.add('show'); document.body.classList.add('modal-open');
+  document.getElementById('modal-detalhe').classList.add('show');
 }
 
 function calNavMonth(delta) {
@@ -2016,7 +2015,7 @@ function abrirOpcoesDupla(dia) {
       </div>
     </button>`;
 
-  document.getElementById('modal-quem').classList.add('show'); document.body.classList.add('modal-open');
+  document.getElementById('modal-quem').classList.add('show');
   window._duplaAtual = { dia, p1, p2, vJuntos, v1, v2, cred1, cred2 };
 }
 
@@ -2142,7 +2141,7 @@ function montarOpcoesDia() {
     </button>
   `;
   document.getElementById('dia-options').innerHTML = html;
-  document.getElementById('modal-dia').classList.add('show'); document.body.classList.add('modal-open');
+  document.getElementById('modal-dia').classList.add('show');
 }
 
 function setStatusDia(status) {
@@ -2191,7 +2190,7 @@ function abrirRemarcacao() {
   const { mes } = calVisao;
   document.getElementById('remark-sub').textContent = `Dia ${diaAtual.dia} de ${MES_FULL[mes]} → nova data`;
   document.getElementById('remark-date').value = '';
-  document.getElementById('modal-remark').classList.add('show'); document.body.classList.add('modal-open');
+  document.getElementById('modal-remark').classList.add('show');
 }
 function confirmarRemarcacao() {
   const novaData = document.getElementById('remark-date').value;
@@ -2239,7 +2238,7 @@ function abrirNota() {
   document.getElementById('nota-sub').textContent = `${diaAtual.dia} de ${MES_FULL[mes]}`;
   document.getElementById('nota-text').value = nota;
   document.getElementById('btn-apagar-nota').style.display = nota ? 'flex' : 'none';
-  document.getElementById('modal-nota').classList.add('show'); document.body.classList.add('modal-open');
+  document.getElementById('modal-nota').classList.add('show');
   setTimeout(() => document.getElementById('nota-text').focus(), 100);
 }
 function salvarNota() {
@@ -2270,7 +2269,7 @@ function abrirExtra() {
   document.getElementById('extra-desc').value = '';
   document.getElementById('extra-valor').value = '';
   document.getElementById('btn-apagar-extra').style.display = 'none';
-  document.getElementById('modal-extra').classList.add('show'); document.body.classList.add('modal-open');
+  document.getElementById('modal-extra').classList.add('show');
 }
 function salvarExtra() {
   const desc = document.getElementById('extra-desc').value.trim();
@@ -3015,7 +3014,7 @@ function openAlunoModal() {
   const vjEl = document.getElementById('dupla-valorjuntos'); if(vjEl){vjEl.value=''; delete vjEl.dataset.edited;}
   document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('btn-apagar-aluno').style.display = 'none';
-  document.getElementById('modal-aluno').classList.add('show'); document.body.classList.add('modal-open');
+  document.getElementById('modal-aluno').classList.add('show');
   setTimeout(() => document.getElementById('aluno-nome').focus(), 100);
 }
 function editarAluno(id) {
@@ -3065,7 +3064,7 @@ function editarAluno(id) {
     b.classList.toggle('active', (a.diasSugeridos || []).includes(parseInt(b.dataset.dow)));
   });
   document.getElementById('btn-apagar-aluno').style.display = 'flex';
-  document.getElementById('modal-aluno').classList.add('show'); document.body.classList.add('modal-open');
+  document.getElementById('modal-aluno').classList.add('show');
 }
 function toggleDupla() {
   document.getElementById('dupla-fields').style.display = document.getElementById('aluno-dupla').checked ? 'block' : 'none';
@@ -3234,12 +3233,10 @@ document.querySelectorAll('.tab-btn').forEach(t => {
 function fecharModal(id) {
 function fecharModal(id) {
   document.getElementById(id).classList.remove('show');
-  if (document.querySelectorAll('.modal-backdrop.show').length === 0) document.body.classList.remove('modal-open');
   if (id === 'modal-detalhe') refresh();
 }
 document.querySelectorAll('.modal-backdrop').forEach(m => {
-  m.addEventListener('click', e => { if (e.target === m) { m.classList.remove('show'); if (document.querySelectorAll('.modal-backdrop.show').length === 0) document.body.classList.remove('modal-open'); } });
-  m.addEventListener('touchmove', e => { if (!e.target.closest('.modal')) e.preventDefault(); }, { passive: false });
+  m.addEventListener('click', e => { if (e.target === m) { m.classList.remove('show'); } });
 });
 function refresh() {
   const aba = document.querySelector('.tab-btn.active')?.dataset.tab || 'dashboard';
@@ -3393,7 +3390,7 @@ function abrirPresencaConjunto(conjId, dia) {
 
   // Guarda estado temporário das checkboxes
   window._presencaTemp = new Set(presentes);
-  document.getElementById('modal-presenca').classList.add('show'); document.body.classList.add('modal-open');
+  document.getElementById('modal-presenca').classList.add('show');
 }
 
 function togglePresenca(partId) {
@@ -3662,8 +3659,6 @@ if ('serviceWorker' in navigator) {
         }
       });
     });
-    /* Detecta quando a nova SW assumiu o controle e recarrega */
-    navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload());
   });
 }
 
