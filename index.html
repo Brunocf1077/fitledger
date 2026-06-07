@@ -1056,22 +1056,6 @@
       </div>
     </div>
 
-    <div class="config-section">
-      <div class="config-section-title">🖼️ Logo da fatura</div>
-      <p class="config-hint">Aparece no topo da imagem da fatura. PNG com fundo branco ou transparente.</p>
-      <div id="cfg-logo-preview-wrap" style="display:none;text-align:center;margin-bottom:12px;">
-        <img id="cfg-logo-preview" style="max-height:80px;max-width:220px;object-fit:contain;border-radius:8px;border:1px solid var(--border);padding:8px;background:#fff;">
-        <div style="margin-top:8px;">
-          <button class="btn btn-ghost" style="font-size:12px;" onclick="removerLogo()">🗑️ Remover logo</button>
-        </div>
-      </div>
-      <label class="btn btn-secondary" style="cursor:pointer;display:inline-flex;align-items:center;gap:8px;width:100%;justify-content:center;">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-        Escolher imagem
-        <input type="file" accept="image/*" style="display:none;" onchange="carregarLogo(this)">
-      </label>
-    </div>
-
     <div id="cfg-status" style="display:none;" class="cfg-status-ok">✅ Configurações salvas!</div>
     <button class="btn btn-primary" style="width:100%;margin-top:4px;" onclick="salvarConfiguracoes()">Salvar configurações</button>
 
@@ -3583,13 +3567,9 @@ function renderConfig() {
   document.getElementById('cfg-pix-favorecido').value = config.pixFavorecido || '';
   document.getElementById('cfg-pix-chave').value = config.pixChave || '';
 
-  /* Tipo PIX */
+  /* Tipo PIX — só atualiza o active, listener já foi adicionado no init */
   document.querySelectorAll('.pix-tipo-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.tipo === (config.pixTipo || 'CNPJ'));
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.pix-tipo-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-    });
   });
 
   /* Logo preview */
@@ -3646,6 +3626,14 @@ function removerLogo() {
 carregarConfig();
 carregar();
 renderDashboard();
+
+/* Listeners dos botões tipo PIX — adicionados uma única vez */
+document.querySelectorAll('.pix-tipo-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.pix-tipo-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  });
+});
 
 /* Pré-carrega as fontes assim que o app abre — evita erro na primeira geração de fatura */
 (async () => {
