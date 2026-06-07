@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -2640,30 +2640,30 @@ async function gerarFaturaImagem() {
       canvas = await html2canvas(el, h2cOpts);
     }
 
-    /* Download PNG — com fallback para iOS Safari */
     const dataUrl = canvas.toDataURL('image/png');
-    const nomeLimpo = aluno.nome.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9]/g, '_');
-    const filename = `Fatura_${nomeLimpo}_${MES_NOMES[mes]}_${ano}.png`;
+    const nomeLimpo = aluno.nome.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9]/g, '_');
     stage.innerHTML = '';
 
-    /* Tenta link direto primeiro */
-    const link = document.createElement('a');
-    link.href = dataUrl;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
-    /* Se não baixou (iOS PWA), abre em nova aba como fallback */
-    setTimeout(() => {
+    if (isIOS) {
+      /* iOS nao suporta download — abre em nova aba para salvar no rolo */
       const novaAba = window.open('', '_blank');
       if (novaAba) {
-        novaAba.document.write(`<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>Fatura</title><style>body{margin:0;background:#1A7A8A;display:flex;flex-direction:column;align-items:center;min-height:100vh;font-family:sans-serif;}p{color:#fff;font-size:15px;font-weight:600;text-align:center;padding:20px 24px 16px;margin:0;}img{width:100%;max-width:420px;display:block;}</style></head><body><p>📸 Pressione e segure para salvar no rolo</p><img src="${dataUrl}"></body></html>`);
+        novaAba.document.write(`<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>Fatura</title><style>body{margin:0;background:#1A7A8A;display:flex;flex-direction:column;align-items:center;min-height:100vh;font-family:sans-serif;}p{color:#fff;font-size:15px;font-weight:600;text-align:center;padding:20px 24px 16px;margin:0;}img{width:100%;max-width:420px;display:block;border-radius:12px;}</style></head><body><p>📸 Segure a imagem para salvar no rolo</p><img src="${dataUrl}"></body></html>`);
         novaAba.document.close();
       }
-    }, 300);
+    } else {
+      /* Android / desktop — download direto */
+      const link = document.createElement('a');
+      link.href = dataUrl;
+      link.download = `Fatura_${nomeLimpo}_${MES_NOMES[mes]}_${ano}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
 
-    toast('🖼️ Salvando imagem...');
+    toast('🖼️ Imagem gerada!');
   } catch (e) {
     console.error(e);
     toast('Erro ao gerar imagem');
