@@ -2289,7 +2289,27 @@ function apagarNota() { document.getElementById('nota-text').value = ''; salvarN
 /* Extra */
 function abrirExtra() {
   fecharModal('modal-dia');
+  fecharModal('modal-quem');
   const aluno = detalheAluno;
+  const { ano, mes } = calVisao;
+  const proxMes = mes === 11 ? 0 : mes + 1;
+  const proxAno = mes === 11 ? ano + 1 : ano;
+  const keyProx = mesKey(aluno.id, proxAno, proxMes);
+  const extrasProx = state.extras[keyProx] || [];
+  const extraExistente = extrasProx.find(e => e.dia === diaAtual.dia);
+
+  /* Se já existe extra nesse dia, abre para editar/apagar */
+  if (extraExistente) {
+    _extraEditandoId = extraExistente.id;
+    document.getElementById('extra-sub').textContent = 'Dia ' + diaAtual.dia + ' · editar cobrança';
+    document.getElementById('extra-desc').value = extraExistente.desc;
+    document.getElementById('extra-valor').value = extraExistente.valor.toFixed(2);
+    document.getElementById('btn-apagar-extra').style.display = 'block';
+    document.getElementById('modal-extra').classList.add('show');
+    return;
+  }
+
+  _extraEditandoId = null;
   const isDupla = aluno.dupla && aluno.dupla.length === 2;
   if (isDupla) {
     const p1 = aluno.dupla[0];
@@ -2371,7 +2391,43 @@ function salvarExtra() {
   renderFaturaResumo();
   toast('➕ Extra adicionado — aparece na fatura de ' + MES_NOMES[proxMes]);
 }
-function apagarExtra() {}
+let _extraEditandoId = null;
+
+function apagarExtra() {
+  if (!_extraEditandoId) return;
+  const { ano, mes } = calVisao;
+  const aluno = detalheAluno;
+
+  /* O extra foi criado no mês atual mas salvo no mês seguinte */
+  const proxMes = mes === 11 ? 0 : mes + 1;
+  const proxAno = mes === 11 ? ano + 1 : ano;
+  const keyProx = mesKey(aluno.id, proxAno, proxMes);
+
+  if (state.extras[keyProx]) {
+    state.extras[keyProx] = state.extras[keyProx].filter(e => e.id !== _extraEditandoId);
+    if (state.extras[keyProx].length === 0) delete state.extras[keyProx];
+  }
+
+  /* Remove a marcação roxa do calendário se não tem mais extras nesse dia */
+  const key = mesKey(aluno.id, ano, mes);
+  const dd = String(diaAtual.dia).padStart(2, '0');
+  const temMaisExtras = (state.extras[keyProx] || []).some(e => e.dia === diaAtual.dia);
+  if (!temMaisExtras && state.treinos[key] && state.treinos[key][dd]) {
+    const t = state.treinos[key][dd];
+    if (t.status === 'extra') {
+      delete state.treinos[key][dd];
+    } else {
+      delete t.temExtra;
+    }
+  }
+
+  _extraEditandoId = null;
+  salvar();
+  fecharModal('modal-extra');
+  renderCalendario();
+  renderFaturaResumo();
+  toast('🗑️ Cobrança extra removida');
+}
 
 
 /* ================================================================
