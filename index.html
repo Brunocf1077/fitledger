@@ -2016,6 +2016,13 @@ function abrirOpcoesDupla(dia) {
         <div class="opt-desc">Crédito ${fmtBRL(vJuntos)} pro mês seguinte</div>
       </div>
     </button>
+    <button class="opt remark" onclick="fecharModal('modal-quem');diaAtual={dia:${dia},pessoa:null};abrirRemarcacao()">
+      <div class="opt-icon">🔄</div>
+      <div class="opt-content">
+        <div class="opt-title">Remarcou</div>
+        <div class="opt-desc">Move pra outra data</div>
+      </div>
+    </button>
     <button class="opt extra" onclick="fecharModal('modal-quem');diaAtual={dia:${dia},pessoa:null};abrirExtra()">
       <div class="opt-icon">➕</div>
       <div class="opt-content">
