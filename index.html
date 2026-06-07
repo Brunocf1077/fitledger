@@ -3562,7 +3562,7 @@ function renderAgendaHoje() {
    ================================================================ */
 function renderConfig() {
   document.getElementById('cfg-nome-personal').value = config.nomePersonal || '';
-  document.getElementById('cfg-nome-fantasia').value = config.nomeFantasia || '';
+
   document.getElementById('cfg-rodape').value = config.rodape || '';
   document.getElementById('cfg-pix-favorecido').value = config.pixFavorecido || '';
   document.getElementById('cfg-pix-chave').value = config.pixChave || '';
@@ -3572,20 +3572,12 @@ function renderConfig() {
     btn.classList.toggle('active', btn.dataset.tipo === (config.pixTipo || 'CNPJ'));
   });
 
-  /* Logo preview */
-  if (config.logoBase64) {
-    document.getElementById('cfg-logo-preview').src = config.logoBase64;
-    document.getElementById('cfg-logo-preview-wrap').style.display = 'block';
-  } else {
-    document.getElementById('cfg-logo-preview-wrap').style.display = 'none';
-  }
 
   document.getElementById('cfg-status').style.display = 'none';
 }
 
 function salvarConfiguracoes() {
   config.nomePersonal = document.getElementById('cfg-nome-personal').value.trim();
-  config.nomeFantasia = document.getElementById('cfg-nome-fantasia').value.trim();
   config.rodape = document.getElementById('cfg-rodape').value.trim();
   config.pixFavorecido = document.getElementById('cfg-pix-favorecido').value.trim();
   config.pixChave = document.getElementById('cfg-pix-chave').value.trim();
