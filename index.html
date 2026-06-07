@@ -451,6 +451,7 @@
     align-items: flex-end;
     justify-content: center;
     z-index: 100;
+    touch-action: none;
   }
   .modal-backdrop.show { display: flex; }
   .modal-backdrop.center { align-items: center; padding: 20px; }
@@ -458,8 +459,11 @@
     background: var(--surface);
     border-radius: 26px 26px 0 0;
     width: 100%; max-width: 520px;
-    max-height: 94vh;
-    overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+    max-height: 88vh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
     padding: 26px 22px calc(28px + var(--safe-bottom));
     border-top: 2px solid var(--accent);
     box-shadow: 0 -8px 32px rgba(0,0,0,0.10);

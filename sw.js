@@ -1,4 +1,4 @@
-const CACHE = 'fitledger-v3';
+const CACHE = 'fitledger-v4';
 const ASSETS = ['./', './index.html'];
 
 /* Instala e cacheia os arquivos */
