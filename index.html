@@ -915,7 +915,12 @@
     body { max-width: 640px; }
     .tabbar { max-width: 640px; }
   }
-</style>
+  /* Modal de imagem para iOS PWA */
+  #img-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9999; flex-direction:column; align-items:center; justify-content:center; }
+  #img-modal.show { display:flex; }
+  #img-modal p { color:#fff; font-size:15px; font-weight:600; text-align:center; padding:0 24px 16px; margin:0; font-family:Outfit,sans-serif; }
+  #img-modal img { width:100%; max-width:360px; display:block; border-radius:12px; }
+  #img-modal-close { position:absolute; top:16px; right:16px; background:rgba(255,255,255,0.15); border:none; color:#fff; font-size:22px; width:40px; height:40px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; }</style>
 </head>
 <body>
 <!-- TOP BAR -->
@@ -1336,6 +1341,7 @@
 <div class="toast" id="toast"></div>
 <div class="loading" id="loading"><div class="spinner"></div><div class="loading-text">Gerando fatura...</div></div>
 <div id="pdf-stage"></div>
+<div id="img-modal"><button id="img-modal-close" onclick="document.getElementById('img-modal').classList.remove('show')">✕</button><p>📸 Segure a imagem para salvar no rolo</p><img id="img-modal-img" src=""></div>
 
 <script>
 /* ================================================================
@@ -2645,14 +2651,12 @@ async function gerarFaturaImagem() {
     stage.innerHTML = '';
 
     const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-
     if (isIOS) {
-      /* iOS nao suporta download — abre em nova aba para salvar no rolo */
-      const novaAba = window.open('', '_blank');
-      if (novaAba) {
-        novaAba.document.write(`<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>Fatura</title><style>body{margin:0;background:#1A7A8A;display:flex;flex-direction:column;align-items:center;min-height:100vh;font-family:sans-serif;}p{color:#fff;font-size:15px;font-weight:600;text-align:center;padding:20px 24px 16px;margin:0;}img{width:100%;max-width:420px;display:block;border-radius:12px;}</style></head><body><p>📸 Segure a imagem para salvar no rolo</p><img src="${dataUrl}"></body></html>`);
-        novaAba.document.close();
-      }
+      /* iOS PWA bloqueia window.open — mostra modal interno para salvar no rolo */
+      const modal = document.getElementById('img-modal');
+      const modalImg = document.getElementById('img-modal-img');
+      modalImg.src = dataUrl;
+      modal.classList.add('show');
     } else {
       /* Android / desktop — download direto */
       const link = document.createElement('a');
