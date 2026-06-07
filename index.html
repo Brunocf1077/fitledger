@@ -2592,8 +2592,8 @@ async function gerarFaturaImagem() {
     /* Injeta o logo — usa config se tiver, senão usa o padrão */
     html = html.replace('LOGO_IMG_PLACEHOLDER', (config.logoBase64 || LOGO_DEFAULT).split(',')[1] || (config.logoBase64 || LOGO_DEFAULT));
     stage.innerHTML = html;
-    /* Aguarda fontes — se já pré-carregadas, instantâneo; senão aguarda */
-    if (!window._fontesCarregadas) {
+    /* Aguarda fontes e aquecimento do canvas */
+    if (!window._fontesCarregadas || !window._canvasAquecido) {
       await document.fonts.ready;
       await Promise.all([
         document.fonts.load('700 16px "Outfit"'),
@@ -2601,8 +2601,10 @@ async function gerarFaturaImagem() {
         document.fonts.load('600 16px "Sora"'),
       ]);
       window._fontesCarregadas = true;
+      await new Promise(r => setTimeout(r, 500));
+    } else {
+      await new Promise(r => setTimeout(r, 300));
     }
-    await new Promise(r => setTimeout(r, 300));
 
     const el = stage.firstElementChild;
     const h2cOpts = {
@@ -3613,7 +3615,7 @@ document.querySelectorAll('.pix-tipo-btn').forEach(btn => {
   });
 });
 
-/* Pré-carrega as fontes assim que o app abre — evita erro na primeira geração de fatura */
+/* Pré-carrega fontes e aquece o html2canvas no iOS — evita erro na primeira geração */
 (async () => {
   try {
     await document.fonts.ready;
@@ -3624,6 +3626,18 @@ document.querySelectorAll('.pix-tipo-btn').forEach(btn => {
     ]);
   } catch(e) {}
   window._fontesCarregadas = true;
+
+  /* Renderização fantasma — aquece o html2canvas para a primeira chamada real funcionar */
+  try {
+    await new Promise(r => setTimeout(r, 800));
+    const div = document.createElement('div');
+    div.style.cssText = 'position:fixed;left:-9999px;top:-9999px;width:10px;height:10px;font-family:Outfit,sans-serif;';
+    div.textContent = 'x';
+    document.body.appendChild(div);
+    await html2canvas(div, { scale: 1, logging: false, imageTimeout: 0 });
+    document.body.removeChild(div);
+    window._canvasAquecido = true;
+  } catch(e) {}
 })();
 
 </script>
