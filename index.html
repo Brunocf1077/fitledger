@@ -1545,14 +1545,24 @@ function calcularFatura(aluno, ano, mes) {
         pg1.cobradas++; pg2.cobradas++;
         pg1.valorCobrado += v1; pg2.valorCobrado += v2;
         r.cobradas++; r.valorCobrado += vJuntos;
+      } else if (st1 === 'ok' && st2 === 'credito') {
+        /* Só p1 veio, fatura já paga → mantém vJuntos, crédito vai pro mês seguinte */
+        pg1.cobradas++; pg2.cobradas++;
+        pg1.valorCobrado += v1; pg2.valorCobrado += v2;
+        r.cobradas++; r.valorCobrado += vJuntos;
+      } else if (st2 === 'ok' && st1 === 'credito') {
+        /* Só p2 veio, fatura já paga → mantém vJuntos, crédito vai pro mês seguinte */
+        pg1.cobradas++; pg2.cobradas++;
+        pg1.valorCobrado += v1; pg2.valorCobrado += v2;
+        r.cobradas++; r.valorCobrado += vJuntos;
       } else if (st1 === 'ok' && st2 === 'noshow') {
-        /* Só p1 veio, p2 faltou na hora → cobra v2, sem crédito */
+        /* Só p1 veio, fatura NÃO paga → cobra só v2 */
         pg1.cobradas++; pg1.valorCobrado += v2;
         pg2.faltas++;
         r.cobradas++; r.faltas++;
         r.valorCobrado += v2;
       } else if (st2 === 'ok' && st1 === 'noshow') {
-        /* Só p2 veio, p1 faltou na hora → cobra v1, sem crédito */
+        /* Só p2 veio, fatura NÃO paga → cobra só v1 */
         pg2.cobradas++; pg2.valorCobrado += v1;
         pg1.faltas++;
         r.cobradas++; r.faltas++;
@@ -1632,12 +1642,10 @@ function calcularCreditoMes(aluno, ano, mes) {
   for (const dd in treinos) {
     const t = treinos[dd];
     if (isDupla) {
-      /* Dupla: crédito de sessão cancelada inteira */
       if (t.status === 'cancel') {
         credito += vJuntos;
-      }
-      /* Crédito parcial quando só um faltou (armazenado em t.creditoDupla por marcarDupla) */
-      else if (t.creditoDupla) {
+      } else if (t.creditoDupla) {
+        /* Crédito parcial: só um faltou com fatura já paga */
         credito += t.creditoDupla;
       }
       /* Fallback para dados antigos (per-pessoa) */
@@ -2061,19 +2069,19 @@ function marcarDupla(opcao) {
     t.pessoas[p2.id] = { status: 'ok' };
     t.creditoDupla = 0;
   } else if (opcao === 'so1') {
-    /* Só p1 veio: p2 faltou → cobra v2 (valor solo de p2)
-       Crédito só se fatura já foi paga (aluno já pagou o mês) */
+    const jaPago = !!state.pagamentos[mesKey(aluno.id, ano, mes)];
     t.status = 'ok';
     t.pessoas[p1.id] = { status: 'ok' };
-    t.pessoas[p2.id] = { status: 'noshow' };
-    t.creditoDupla = state.pagamentos[mesKey(aluno.id, ano, mes)] ? cred1 : 0;
+    /* 'credito' = já pago, mantém vJuntos no mês atual e gera crédito no seguinte
+       'noshow'  = ainda não pago, abate v2 do mês atual */
+    t.pessoas[p2.id] = { status: jaPago ? 'credito' : 'noshow' };
+    t.creditoDupla = jaPago ? cred1 : 0;
   } else if (opcao === 'so2') {
-    /* Só p2 veio: p1 faltou → cobra v1 (valor solo de p1)
-       Crédito só se fatura já foi paga (aluno já pagou o mês) */
+    const jaPago = !!state.pagamentos[mesKey(aluno.id, ano, mes)];
     t.status = 'ok';
-    t.pessoas[p1.id] = { status: 'noshow' };
+    t.pessoas[p1.id] = { status: jaPago ? 'credito' : 'noshow' };
     t.pessoas[p2.id] = { status: 'ok' };
-    t.creditoDupla = state.pagamentos[mesKey(aluno.id, ano, mes)] ? cred2 : 0;
+    t.creditoDupla = jaPago ? cred2 : 0;
   } else if (opcao === 'ambos_noshow') {
     /* Os dois faltaram na hora → cobra vJuntos */
     t.status = 'noshow';
@@ -2492,7 +2500,8 @@ function renderFaturaResumo() {
       const t = treinos[dd];
       const st1 = t.pessoas?.[p1.id]?.status || t.status || 'ok';
       const st2 = t.pessoas?.[p2.id]?.status || t.status || 'ok';
-      if (st1 === 'ok' && st2 === 'ok') sessambos++;
+      const ok1 = st1==='ok'||st1==='credito', ok2 = st2==='ok'||st2==='credito';
+      if (ok1 && ok2) sessambos++;
       else if (st1 === 'ok' && st2 === 'noshow') sessSo.push({nome: p1.nome, v: v2});
       else if (st2 === 'ok' && st1 === 'noshow') sessSo.push({nome: p2.nome, v: v1});
       else if (st1 === 'noshow' && st2 === 'noshow') sessNoshow++;
@@ -2651,9 +2660,10 @@ function montarHtmlFaturaImagem(aluno, ano, mes, f) {
       const st1 = t.pessoas?.[p1.id]?.status || t.status || 'ok';
       const st2 = t.pessoas?.[p2.id]?.status || t.status || 'ok';
       let chave, valor, lbl;
-      if (st1 === 'ok' && st2 === 'ok') { chave='ambos'; valor=vJt; lbl='Os dois'; }
-      else if (st1 === 'ok') { chave='so1'; valor=vs2; lbl=`Só ${p1.nome}`; }
-      else if (st2 === 'ok') { chave='so2'; valor=vs1; lbl=`Só ${p2.nome}`; }
+      const ok1 = st1==='ok'||st1==='credito', ok2 = st2==='ok'||st2==='credito';
+      if (ok1 && ok2) { chave='ambos'; valor=vJt; lbl='Os dois'; }
+      else if (st1==='ok' && st2==='noshow') { chave='so1'; valor=vs2; lbl=`Só ${p1.nome}`; }
+      else if (st2==='ok' && st1==='noshow') { chave='so2'; valor=vs1; lbl=`Só ${p2.nome}`; }
       else if (st1==='noshow' && st2==='noshow') { chave='noshow'; valor=vJt; lbl='Os dois faltaram'; }
       else if (st1==='cancel' || st2==='cancel') { chave='cancel'; valor=0; lbl='Desmarcaram'; }
       else continue;
