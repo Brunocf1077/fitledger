@@ -2391,6 +2391,30 @@ function salvarExtra() {
   renderFaturaResumo();
   toast('➕ Extra adicionado — aparece na fatura de ' + MES_NOMES[proxMes]);
 }
+/* Apaga extra direto da linha da fatura (quando o dia já não está no calendário) */
+function apagarExtraFatura(extraId, ano, mes) {
+  const aluno = detalheAluno;
+  const key = mesKey(aluno.id, ano, mes);
+  if (state.extras[key]) {
+    const e = state.extras[key].find(x => x.id === extraId);
+    state.extras[key] = state.extras[key].filter(x => x.id !== extraId);
+    if (state.extras[key].length === 0) delete state.extras[key];
+    /* Limpa marcação roxa no calendário do mês de origem, se houver */
+    if (e && e.refMes !== undefined) {
+      const keyOrig = mesKey(aluno.id, e.refAno || ano, e.refMes);
+      const dd = String(e.dia).padStart(2, '0');
+      if (state.treinos[keyOrig] && state.treinos[keyOrig][dd]) {
+        const t = state.treinos[keyOrig][dd];
+        if (t.status === 'extra') delete state.treinos[keyOrig][dd];
+        else delete t.temExtra;
+      }
+    }
+  }
+  salvar();
+  renderFaturaResumo();
+  toast('🗑️ Extra removido');
+}
+
 let _extraEditandoId = null;
 
 function apagarExtra() {
@@ -2507,7 +2531,11 @@ function renderFaturaResumo() {
 
   for (const e of f.extras) {
     const ref = e.refMes !== undefined ? ` (${MES_NOMES[e.refMes]}/${e.refAno || ''})` : '';
-    html += `<div class="fatura-resumo-linha extra"><span class="lbl">+ ${escapeHtml(e.desc)}${ref}</span><span class="val">${fmtBRL(e.valor)}</span></div>`;
+    html += `<div class="fatura-resumo-linha extra" style="display:flex;align-items:center;gap:8px;">
+      <span class="lbl" style="flex:1">+ ${escapeHtml(e.desc)}${ref}</span>
+      <span class="val">${fmtBRL(e.valor)}</span>
+      <button onclick="apagarExtraFatura('${e.id}',${ano},${mes})" style="background:none;border:none;color:#e53935;font-size:18px;cursor:pointer;padding:0 4px;line-height:1;" title="Remover">🗑️</button>
+    </div>`;
   }
   if (f.creditoAnterior > 0) {
     html += `<div class="fatura-resumo-linha credito"><span class="lbl">Crédito mês anterior</span><span class="val">−${fmtBRL(f.creditoAnterior)}</span></div>`;
