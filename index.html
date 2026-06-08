@@ -1919,6 +1919,7 @@ function tocarDia(dia) {
   const { ano, mes } = calVisao;
   const aluno = detalheAluno;
   const isConjunto = aluno.tipo === 'conjunto';
+  const isDupla = !!(aluno.dupla && aluno.dupla.length === 2);
 
   /* SESSÃO CONJUNTA: sempre abre o modal "quem veio?" */
   if (isConjunto) {
@@ -1932,6 +1933,11 @@ function tocarDia(dia) {
   const treinos = state.treinos[key];
 
   if (!treinos[dd]) {
+    if (isDupla) {
+      /* Dupla: primeiro toque abre o modal de opções sem criar entrada automática */
+      abrirOpcoesDupla(dia);
+      return;
+    }
     treinos[dd] = { status: 'ok' };
     salvar();
     renderCalendario();
@@ -2306,8 +2312,9 @@ function abrirExtra() {
   const extrasProx = state.extras[keyProx] || [];
   const extraExistente = extrasProx.find(e => e.dia === diaAtual.dia);
 
-  /* Se já existe extra nesse dia, abre para editar/apagar */
-  if (extraExistente) {
+  /* Se já existe extra nesse dia e NÃO é dupla, abre para editar/apagar */
+  const isDupla = !!(aluno.dupla && aluno.dupla.length === 2);
+  if (extraExistente && !isDupla) {
     _extraEditandoId = extraExistente.id;
     document.getElementById('extra-sub').textContent = 'Dia ' + diaAtual.dia + ' · editar cobrança';
     document.getElementById('extra-desc').value = extraExistente.desc;
