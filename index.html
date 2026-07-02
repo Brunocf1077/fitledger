@@ -2711,11 +2711,11 @@ function montarHtmlFaturaImagem(aluno, ano, mes, f) {
           linhas += `<div class="fi-linha"><span class="fl-lbl">${escapeHtmlPdf(g.nome)} solo ×${g.solo}</span><span class="fl-val">${fmtBRL(g.vSolo)}</span></div>`;
       }
     }
+    if (f.creditoAnterior > 0 && !aluno.atrasado)
+      linhas += `<div class="fi-linha fi-credito"><span class="fl-lbl">Crédito mês anterior</span><span class="fl-val">− ${fmtBRL(f.creditoAnterior)}</span></div>`;
   }
   for (const e of f.extras)
     linhas += `<div class="fi-linha fi-extra"><span class="fl-lbl">+ ${escapeHtmlPdf(e.desc)}</span><span class="fl-val">${fmtBRL(e.valor)}</span></div>`;
-  if (f.creditoAnterior > 0)
-    linhas += `<div class="fi-linha fi-credito"><span class="fl-lbl">Crédito mês anterior</span><span class="fl-val">− ${fmtBRL(f.creditoAnterior)}</span></div>`;
 
   return `
   <div class="fatura-img-wrap">
